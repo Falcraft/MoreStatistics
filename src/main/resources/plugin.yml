@@ -1,0 +1,3 @@
+name: moreStatistics
+main: fr.azarias.morestatistics.CustomStatsPlugin
+version: 1.0
