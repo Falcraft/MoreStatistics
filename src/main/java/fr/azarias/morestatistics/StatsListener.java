@@ -43,6 +43,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import net.ess3.api.events.AfkStatusChangeEvent;
 import org.bukkit.Material;
+import org.bukkit.block.data.type.Jukebox;
 import org.bukkit.event.block.Action;
 
 /**
@@ -76,7 +77,7 @@ public class StatsListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent ev) {
         //Propels event seems to be cancelled ...
         if (ev.getAction() == Action.RIGHT_CLICK_AIR
-                && ev.getMaterial() == Material.FIREWORK
+                && ev.getMaterial() == Material.FIREWORK_ROCKET
                 && ev.getPlayer().isGliding()) {
             registry.addStat(ev.getPlayer(), "stat.elytraPropels");
         }
@@ -87,7 +88,7 @@ public class StatsListener implements Listener {
         if (ev.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if (ev.getMaterial().isRecord()
                     && ev.getClickedBlock().getType() == Material.JUKEBOX
-                    && ev.getClickedBlock().getData() == 0) {
+                    && !((Jukebox) ev.getClickedBlock().getBlockData()).hasRecord()) {
                 registry.addStat(ev.getPlayer(), "stat.recordPlayed");
             } else if (isShovel(ev.getMaterial())
                     && ev.getClickedBlock().getType() == Material.GRASS) {
@@ -97,8 +98,8 @@ public class StatsListener implements Listener {
     }
 
     private boolean isShovel(Material mat) {
-        return mat == Material.WOOD_SPADE || mat == Material.IRON_SPADE || mat == Material.GOLD_SPADE
-                || mat == Material.DIAMOND_SPADE || mat == Material.STONE_SPADE;
+        return mat == Material.WOODEN_SHOVEL || mat == Material.IRON_SHOVEL || mat == Material.GOLDEN_SHOVEL
+                || mat == Material.DIAMOND_SHOVEL || mat == Material.STONE_SHOVEL;
     }
 
     @EventHandler
@@ -125,26 +126,13 @@ public class StatsListener implements Listener {
         }
     }
 
+    /**
+     * Might be handled by minecraft on its own now ?
+     * @param ev
+     */
     @EventHandler
     public void onEntityDeath(EntityDeathEvent ev) {
-        if (ev.getEntity() instanceof Player) {
-            EntityDamageEvent.DamageCause cause = ev.getEntity().getLastDamageCause().getCause();
-            if (null != cause) {
-                switch (cause) {
-                    case VOID:
-                        registry.addStat((Player) ev.getEntity(), "stat.fellOfWorld");
-                        break;
-                    case FLY_INTO_WALL:
-                        registry.addStat((Player) ev.getEntity(), "stat.flyIntoWall");
-                        break;
-                    case LAVA:
-                        registry.addStat((Player) ev.getEntity(), "stat.burnInLava");
-                        break;
-                    default:
-                        break;
-                }
-            }
-        } else {
+        if (!(ev.getEntity() instanceof Player)) {
             Player pl = ev.getEntity().getKiller();
             if (pl != null) {
                 if (ev.getEntity() instanceof EnderDragon) {
