@@ -80,7 +80,7 @@ public class MoreStatistics {
         modifiedStats.add(p.getUniqueId());
         if (taskId == null) {
             BukkitScheduler scheduler = plugin.getServer().getScheduler();
-            taskId = scheduler.scheduleAsyncDelayedTask(plugin, this::saveStatsToFile, 100L);//Save every hour
+            scheduler.runTaskLater(plugin, this::saveStatsToFile, 100L);
         }
     }
 

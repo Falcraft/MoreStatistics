@@ -23,6 +23,7 @@
  */
 package fr.azarias.morestatistics;
 
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
