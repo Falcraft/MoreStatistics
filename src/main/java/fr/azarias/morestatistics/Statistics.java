@@ -34,7 +34,6 @@ public enum Statistics {
 
     AFK_ONE_MINUTE("custom","afk_one_minute"),
     ELYTRA_PROPELS("custom", "elytra_propels"),
-    RECORD_PLAYED("custom", "record_played"),
     PATH_BLOCK("custom", "path_block"),
     TAME_ENTITY("custom", "tame_entity"),
     XP_RECEIVED("custom", "xp_received"),

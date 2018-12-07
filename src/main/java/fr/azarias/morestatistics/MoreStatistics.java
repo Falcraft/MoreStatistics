@@ -36,6 +36,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 import org.bukkit.entity.AnimalTamer;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -167,7 +168,7 @@ public class MoreStatistics {
      * @param player player to load
      * @param jsonFile json file
      */
-    public void loadStatFile(AnimalTamer player) {
+    public void loadStatFile(Player player) {
         try {
             Path jsonFile = plugin.getDataFolder().toPath().resolve(player.getUniqueId() + ".json");
             if(Files.exists(jsonFile)){
@@ -175,7 +176,7 @@ public class MoreStatistics {
                 String fileContent = new String(Files.readAllBytes(jsonFile)).trim();
                 JsonElement obj = parser.parse(fileContent);
                 if (obj.isJsonObject()) {
-                    playersStats.put(player.getUniqueId(), new PlayerStat(obj.getAsJsonObject()));
+                    playersStats.put(player.getUniqueId(), new PlayerStat(obj.getAsJsonObject(), player));
                 } else {
                     throw new JsonParseException("Invalid statistics file found");
                 }

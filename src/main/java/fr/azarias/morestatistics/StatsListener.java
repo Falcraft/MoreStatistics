@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Material;
-import org.bukkit.block.data.type.Jukebox;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.EventHandler;
@@ -86,11 +85,7 @@ public class StatsListener implements Listener {
         }
 
         if (ev.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            if (ev.getMaterial().isRecord()
-                    && ev.getClickedBlock().getType() == Material.JUKEBOX
-                    && !((Jukebox) ev.getClickedBlock().getBlockData()).hasRecord()) {
-                registry.addStat(ev.getPlayer(), Statistics.RECORD_PLAYED);
-            } else if (isShovel(ev.getMaterial())
+            if (isShovel(ev.getMaterial())
                     && ev.getClickedBlock().getType() == Material.GRASS) {
                 registry.addStat(ev.getPlayer(), Statistics.PATH_BLOCK);
             }

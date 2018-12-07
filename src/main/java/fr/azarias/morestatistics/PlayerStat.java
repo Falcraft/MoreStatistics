@@ -26,6 +26,8 @@ package fr.azarias.morestatistics;
 
 import com.google.gson.JsonObject;
 
+import org.bukkit.entity.Player;
+
 import fr.azarias.morestatistics.Updater.STAT_VERSION;
 
 /**
@@ -54,10 +56,10 @@ public class PlayerStat {
      * checks if we need to update the version
      * @param from
      */
-    public PlayerStat(JsonObject from) {
+    public PlayerStat(JsonObject from, Player player) {
         // check version and maybe update it
         if(!from.has("DataVersion")){
-            documentRoot = Updater.toVersion(STAT_VERSION.VERSION_ONE, from);
+            documentRoot = Updater.toVersion(STAT_VERSION.VERSION_ONE, from, player);
         } else {
             documentRoot = from;
         }
