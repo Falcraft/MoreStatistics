@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2017 azarias.
+ * Copyright 2017-2018 azarias.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,37 +23,65 @@
  */
 package fr.azarias.morestatistics;
 
-import java.util.Map;
-import org.json.simple.JSONObject;
+
+import com.google.gson.JsonObject;
+
+import fr.azarias.morestatistics.Updater.STAT_VERSION;
 
 /**
+ * The object representing the statistics of a player
  *
  * @author azarias
  */
 public class PlayerStat {
 
-    private final Map<String, Long> mStats;
+    private final JsonObject documentRoot;
+    private final JsonObject stats;
 
+    /**
+     * Empty statistics
+     * when this is a new player who connected
+     */
     public PlayerStat() {
-        mStats = new JSONObject();
+        documentRoot = new JsonObject();
+        stats = new JsonObject();
+        documentRoot.addProperty("DataVersion", "1");
+        documentRoot.add("stats", stats);
     }
 
-    public PlayerStat(JSONObject from) {
-        mStats = from;
-    }
-
-    public void addStat(String statName, int value) {
-        if (!mStats.containsKey(statName)) {
-            mStats.put(statName, 0L);
+    /**
+     * When a already known player connects
+     * checks if we need to update the version
+     * @param from
+     */
+    public PlayerStat(JsonObject from) {
+        // check version and maybe update it
+        if(!from.has("DataVersion")){
+            documentRoot = Updater.toVersion(STAT_VERSION.VERSION_ONE, from);
+        } else {
+            documentRoot = from;
         }
+        stats = documentRoot.getAsJsonObject("stats");
+    }
 
-        Integer i = value;
-        
-        long actualValue = mStats.get(statName);
-        mStats.put(statName, actualValue + i.longValue());
+    /**
+     * Increments the stat of the given increment
+     * @param stat
+     * @param increment
+     */
+    public void addStat(Statistics stat, int increment){
+        stat.addToJson(stats, increment);
+    }
+
+    /**
+     * Increment the given stat by one
+     * @param stat
+     */
+    public void addStat(Statistics stat){
+        addStat(stat, 1);
     }
 
     public String toJSON() {
-        return JSONObject.toJSONString(mStats);
+        return documentRoot.toString();
     }
 }

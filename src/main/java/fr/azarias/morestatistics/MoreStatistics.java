@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2017 azarias.
+ * Copyright 2017-2018 azarias.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,18 @@ package fr.azarias.morestatistics;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.scheduler.BukkitScheduler;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.bukkit.scheduler.BukkitTask;
 
 /**
  *
@@ -46,47 +47,106 @@ public class MoreStatistics {
 
     private final CustomStatsPlugin plugin;
 
-    private final Map<UUID, PlayerStat> playersStats;
+    private final ConcurrentHashMap<UUID, PlayerStat> playersStats;
 
-    private final Set<UUID> modifiedStats;
+    private  final CopyOnWriteArraySet<UUID> modifiedStats;
 
-    private Integer taskId = null;
+    private BukkitTask taskId = null;
 
     public MoreStatistics(CustomStatsPlugin p) {
         plugin = p;
-        playersStats = new HashMap<>();
-        modifiedStats = new HashSet<>();
-        loadPlayersStats();
+        playersStats = new ConcurrentHashMap<>();
+        modifiedStats = new CopyOnWriteArraySet<>();
     }
 
-    public void addStat(AnimalTamer p, String statName) {
-        addStat(p, statName, 1);
+    /**
+     * Increments by one the given stat
+     * of the given player
+     */
+    public void addStat(AnimalTamer p, Statistics stat) {
+        addStat(p, stat, 1);
     }
 
-    public void addStat(AnimalTamer p, String statName, int value) {
+    /**
+     * Increment by the given value, the given stat
+     * of the given player
+     * @param p the player who's stat is going to be incremented
+     * @param stat the stat that's going to be incremented
+     * @param value the value to increment
+     */
+    public void addStat(AnimalTamer p, Statistics stat, int value) {
         if (!playersStats.containsKey(p.getUniqueId())) {
             playersStats.put(p.getUniqueId(), new PlayerStat());
         }
         PlayerStat stats = playersStats.get(p.getUniqueId());
-        stats.addStat(statName, value);
-        savePlayerStats(p);
+        stats.addStat(stat, value);
+        updatePlayerStats(p);
     }
     
+    /**
+     * Whenever the plugin is disabled (server shutdown)
+     * Saves all the modifieds stats
+     * and unload all the statistics
+     */
     public void flush(){
-        saveStatsToFile();
+        saveModifiedStats(plugin.getDataFolder().toPath());
+        modifiedStats.clear();
+        playersStats.clear();
     }
 
-    private void savePlayerStats(AnimalTamer p) {
+    /**
+     * Update the stats of the player, in ram
+     * and, if there is not one already, scedules an update to
+     * save the modified statistics (in one hour)
+     */
+    private void updatePlayerStats(AnimalTamer p) {
         modifiedStats.add(p.getUniqueId());
         if (taskId == null) {
             BukkitScheduler scheduler = plugin.getServer().getScheduler();
-            scheduler.runTaskLater(plugin, this::saveStatsToFile, 100L);
+            long oneHour = /* 1 second */ 20 * /* 1 minute */ 60 * /* 1 hour */ 60L;
+            Path pluginPath = plugin.getDataFolder().toPath();
+            taskId = scheduler.runTaskLaterAsynchronously(plugin, () -> saveModifiedStats(pluginPath), oneHour);
         }
     }
 
-    private synchronized void saveStatsToFile() {
+    /**
+     * When a player quits, directly save his stats
+     * and unload them
+     * @param p
+     */
+    public void immediatePlayerSave(final AnimalTamer p){
+        final Path pluginPath = plugin.getDataFolder().toPath();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> savePlayerStat(p, pluginPath));
+    }
+
+    /**
+     * Saves the stats of a singlye player
+     * is called asynchronously so it uses only thread-safes 
+     * variables
+     * @param p
+     * @param pluginPath
+     */
+    private synchronized void savePlayerStat(final AnimalTamer p, final Path pluginPath){
         try {
-            Path pluginPath = plugin.getDataFolder().toPath();
+            if(!Files.exists(pluginPath)){
+                Files.createDirectory(pluginPath);
+            }
+            Path fPath = pluginPath.resolve(p.getUniqueId().toString() + ".json");
+            Files.write(fPath, playersStats.get(p.getUniqueId()).toJSON().getBytes());
+            modifiedStats.remove(p.getUniqueId());
+            playersStats.remove(p.getUniqueId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Save only the stats that were modifieds since the last save
+     * Flushes the set of the modifieds stats
+     * @param pluginPath path to the plugin where to save the data
+     */
+    private synchronized void saveModifiedStats(Path pluginPath) {
+        try {
             if (!Files.exists(pluginPath)) {
                 Files.createDirectory(pluginPath);
             }
@@ -101,33 +161,29 @@ public class MoreStatistics {
         }
     }
 
-    private void loadPlayersStats() {
-        Path stats = plugin.getDataFolder().toPath();
-        if (!Files.exists(stats)) {
-            return;//No need to check for any stats
-        }
-        try {
-            Files.walk(stats).forEach(file -> {
-                if (Files.isRegularFile(file) && file.toString().toLowerCase().endsWith(".json")) {
-                    loadStatFile(file);
-                }
-            });
-        } catch (IOException ex) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to create file", ex);
-        }
-    }
 
-    private void loadStatFile(Path jsonFile) {
+    /**
+     * Load for the given player, the given json file
+     * @param player player to load
+     * @param jsonFile json file
+     */
+    public void loadStatFile(AnimalTamer player) {
         try {
-            String uuid = jsonFile.getFileName().toString();
-            JSONParser parser = new JSONParser();
-            String fileContent = new String(Files.readAllBytes(jsonFile)).trim();
-            Object obj = parser.parse(fileContent);
-            if (obj instanceof JSONObject) {
-                playersStats.put(UUID.fromString(uuid.replace(".json", "")), new PlayerStat((JSONObject) obj));
+            Path jsonFile = plugin.getDataFolder().toPath().resolve(player.getUniqueId() + ".json");
+            if(Files.exists(jsonFile)){
+                JsonParser parser = new JsonParser();
+                String fileContent = new String(Files.readAllBytes(jsonFile)).trim();
+                JsonElement obj = parser.parse(fileContent);
+                if (obj.isJsonObject()) {
+                    playersStats.put(player.getUniqueId(), new PlayerStat(obj.getAsJsonObject()));
+                } else {
+                    throw new JsonParseException("Invalid statistics file found");
+                }
+            } else {
+                playersStats.put(player.getUniqueId(), new PlayerStat());
             }
-        } catch (IOException | ParseException ex) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load", ex);
+        } catch (IOException | JsonParseException ex) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load stat file of " + player.getUniqueId(), ex);
         }
     }
 }

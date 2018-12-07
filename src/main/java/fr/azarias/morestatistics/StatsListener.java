@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2017 azarias.
+ * Copyright 2017-2018 azarias.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,24 +27,23 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import org.bukkit.entity.EnderDragon;
-import org.bukkit.entity.IronGolem;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Sheep;
-import org.bukkit.entity.Wither;
-import org.bukkit.event.Listener;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerShearEntityEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.entity.EntityTameEvent;
-import net.ess3.api.events.AfkStatusChangeEvent;
+
 import org.bukkit.Material;
 import org.bukkit.block.data.type.Jukebox;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Sheep;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityTameEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerExpChangeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerShearEntityEvent;
+
+import net.ess3.api.events.AfkStatusChangeEvent;
 
 /**
  *
@@ -66,33 +65,34 @@ public class StatsListener implements Listener {
         return registry;
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onEntityTame(EntityTameEvent ev) {
         if (!ev.isCancelled()) {
-            registry.addStat(ev.getOwner(), "custom.tameEntity");
+            registry.addStat(ev.getOwner(), Statistics.TAME_ENTITY);
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerJoin(PlayerJoinEvent ev){
+        registry.loadStatFile(ev.getPlayer());
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent ev) {
-        //Propels event seems to be cancelled ...
         if (ev.getAction() == Action.RIGHT_CLICK_AIR
                 && ev.getMaterial() == Material.FIREWORK_ROCKET
                 && ev.getPlayer().isGliding()) {
-            registry.addStat(ev.getPlayer(), "stat.elytraPropels");
+            registry.addStat(ev.getPlayer(), Statistics.ELYTRA_PROPELS);
         }
 
-        if (ev.isCancelled()) {
-            return;
-        }
         if (ev.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if (ev.getMaterial().isRecord()
                     && ev.getClickedBlock().getType() == Material.JUKEBOX
                     && !((Jukebox) ev.getClickedBlock().getBlockData()).hasRecord()) {
-                registry.addStat(ev.getPlayer(), "stat.recordPlayed");
+                registry.addStat(ev.getPlayer(), Statistics.RECORD_PLAYED);
             } else if (isShovel(ev.getMaterial())
                     && ev.getClickedBlock().getType() == Material.GRASS) {
-                registry.addStat(ev.getPlayer(), "stat.pathBlock");
+                registry.addStat(ev.getPlayer(), Statistics.PATH_BLOCK);
             }
         }
     }
@@ -102,12 +102,13 @@ public class StatsListener implements Listener {
                 || mat == Material.DIAMOND_SHOVEL || mat == Material.STONE_SHOVEL;
     }
 
-    @EventHandler
-    public void onPLayerQui(PlayerQuitEvent ev) {
+    @EventHandler(ignoreCancelled = true)
+    public void onPLayerQuit(PlayerQuitEvent ev) {
         endAfk(ev.getPlayer());
+        registry.immediatePlayerSave(ev.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onAfkStatusChange(AfkStatusChangeEvent ev) {
         if (ev.getValue()) {//Become afk
             afkPlayers.put(ev.getAffected().getBase().getUniqueId(), new Date());
@@ -122,36 +123,30 @@ public class StatsListener implements Listener {
             Date startTime = afkPlayers.get(concerned.getUniqueId());
             Long afkTime = (endTime.getTime() - startTime.getTime()) / 50;
             afkPlayers.remove(concerned.getUniqueId());
-            registry.addStat(concerned, "stat.afkOneMinute", afkTime.intValue());
+            registry.addStat(concerned, Statistics.AFK_ONE_MINUTE, afkTime.intValue());
         }
     }
 
-    /**
-     * Might be handled by minecraft on its own now ?
-     * @param ev
-     */
-    @EventHandler
-    public void onEntityDeath(EntityDeathEvent ev) {
-        if (!(ev.getEntity() instanceof Player)) {
-            Player pl = ev.getEntity().getKiller();
-            if (pl != null) {
-                if (ev.getEntity() instanceof EnderDragon) {
-                    registry.addStat(pl, "stat.killEntity.EnderDragon");
-                } else if (ev.getEntity() instanceof Wither) {
-                    registry.addStat(pl, "stat.killEntity.Wither");
-                } else if (ev.getEntity() instanceof IronGolem) {
-                    registry.addStat(pl, "stat.killEntity.IronGolem");
-                }
-            }
+    @EventHandler(ignoreCancelled = true)
+    public void onXPGained(PlayerExpChangeEvent ev){
+        if(ev.getAmount() > 0){
+            registry.addStat(ev.getPlayer(), Statistics.XP_RECEIVED, ev.getAmount());
         }
-
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerChat(AsyncPlayerChatEvent ev){
+        int length = ev.getMessage().split(" ").length;
+        if(length > 0){
+            registry.addStat(ev.getPlayer(), Statistics.WORDS_SAID, length);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerShearEntity(PlayerShearEntityEvent ev) {
         //Can also shear mooshroom, gotta filter that
-        if (!ev.isCancelled() && ev.getEntity() instanceof Sheep) {
-            registry.addStat(ev.getPlayer(), "stat.shearSheep");
+        if (ev.getEntity() instanceof Sheep) {
+            registry.addStat(ev.getPlayer(), Statistics.SHEAR_SHEEP);
         }
     }
 }
