@@ -38,6 +38,8 @@ public enum Statistics {
     TAME_ENTITY("custom", "tame_entity"),
     XP_RECEIVED("custom", "xp_received"),
     WORDS_SAID("custom", "words_said"),
+    LAUNCH_TRIDENT("custom", "launch_trident"),
+    STRIPPED_WOOD("custom", "stripped_wood"),
     SHEAR_SHEEP("custom", "shear_sheep");
 
     Statistics(String type, String name){

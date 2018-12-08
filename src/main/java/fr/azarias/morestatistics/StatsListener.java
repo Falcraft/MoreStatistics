@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
@@ -40,6 +42,7 @@ import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 
 import net.ess3.api.events.AfkStatusChangeEvent;
@@ -54,6 +57,33 @@ public class StatsListener implements Listener {
     private final MoreStatistics registry;
     private final Map<UUID, Date> afkPlayers;
 
+    private final ImmutableSet<Material> SHOVELS = ImmutableSet.of(
+        Material.WOODEN_SHOVEL, 
+        Material.STONE_SHOVEL,
+        Material.IRON_SHOVEL,
+        Material.GOLDEN_SHOVEL,
+        Material.DIAMOND_SHOVEL
+    );
+    
+    private final ImmutableSet<Material> AXES = ImmutableSet.of(
+        Material.WOODEN_AXE,
+        Material.STONE_AXE,
+        Material.IRON_AXE,
+        Material.GOLDEN_AXE,
+        Material.DIAMOND_AXE
+    );
+
+    private final ImmutableSet<Material> STRIPPABLE = ImmutableSet.of(
+        Material.OAK_WOOD, Material.OAK_LOG,
+        Material.SPRUCE_WOOD, Material.SPRUCE_LOG,
+        Material.BIRCH_WOOD, Material.BIRCH_LOG,
+        Material.JUNGLE_WOOD, Material.JUNGLE_LOG,
+        Material.ACACIA_WOOD, Material.ACACIA_LOG,
+        Material.DARK_OAK_WOOD, Material.DARK_OAK_LOG
+    );
+
+        
+
     public StatsListener(CustomStatsPlugin p) {
         plugin = p;
         registry = new MoreStatistics(p);
@@ -66,15 +96,15 @@ public class StatsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityTame(EntityTameEvent ev) {
-        if (!ev.isCancelled()) {
-            registry.addStat(ev.getOwner(), Statistics.TAME_ENTITY);
-        }
+        registry.addStat(ev.getOwner(), Statistics.TAME_ENTITY);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent ev){
         registry.loadStatFile(ev.getPlayer());
     }
+
+
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent ev) {
@@ -88,13 +118,28 @@ public class StatsListener implements Listener {
             if (isShovel(ev.getMaterial())
                     && ev.getClickedBlock().getType() == Material.GRASS) {
                 registry.addStat(ev.getPlayer(), Statistics.PATH_BLOCK);
+            } else if(isAxe(ev.getMaterial()) && canBeStripped(ev.getClickedBlock().getType())){
+                registry.addStat(ev.getPlayer(), Statistics.STRIPPED_WOOD);
             }
+            
         }
     }
 
+    private boolean canBeStripped(Material mat){
+        return STRIPPABLE.contains(mat);
+    }
+
+    private boolean isAxe(Material mat) {
+        return AXES.contains(mat);
+    }
+
     private boolean isShovel(Material mat) {
-        return mat == Material.WOODEN_SHOVEL || mat == Material.IRON_SHOVEL || mat == Material.GOLDEN_SHOVEL
-                || mat == Material.DIAMOND_SHOVEL || mat == Material.STONE_SHOVEL;
+        return SHOVELS.contains(mat);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerRiptide(PlayerRiptideEvent ev){
+        registry.addStat(ev.getPlayer(), Statistics.LAUNCH_TRIDENT);
     }
 
     @EventHandler(ignoreCancelled = true)

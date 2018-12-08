@@ -13,3 +13,5 @@ This plugin creates a file for each player in the `moreStatistics` folder, and a
 - `custom:shear_sheep` : whenever the player uses the shears to shear a sheep
 - `custom:xp_received`  : total amount of xp received
 - `custom:words_said` : number of words said
+- `custom:stripped_wood` : when stripping woods or logs with an axe
+- `custom:launch_trident` : when using the riptide enchantment of the trident to be launched
