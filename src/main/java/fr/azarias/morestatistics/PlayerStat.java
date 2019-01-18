@@ -61,7 +61,7 @@ public class PlayerStat {
         if(!from.has("DataVersion")){
             documentRoot = Updater.toVersion(STAT_VERSION.VERSION_ONE, from, player);
         } else {
-            documentRoot = from;
+            documentRoot = Updater.addExistingStats(from, player);
         }
         stats = documentRoot.getAsJsonObject("stats");
     }

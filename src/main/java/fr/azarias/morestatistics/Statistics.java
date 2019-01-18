@@ -40,7 +40,12 @@ public enum Statistics {
     WORDS_SAID("custom", "words_said"),
     LAUNCH_TRIDENT("custom", "launch_trident"),
     STRIPPED_WOOD("custom", "stripped_wood"),
-    SHEAR_SHEEP("custom", "shear_sheep");
+    SHEAR_SHEEP("custom", "shear_sheep"),
+    OPEN_TREASURE("custom","open_treasure"),
+    DISCOVER_RECEIPE("custom", "discover_recipe"),
+    LEVEL_WON("custom", "level_won"),
+    MENDING_REPAIR("custom", "mending_repair"),
+    ADVANCEMENT_COMPLETE("custom","advancement_complete");
 
     Statistics(String type, String name){
         this.type = type;
@@ -60,6 +65,13 @@ public enum Statistics {
         Long actualValue = target.get(mName).getAsLong();
         target.addProperty(mName, actualValue + increment);
         return this;
+    }
+
+    public boolean isInJon(JsonObject obj){
+        String action = "minecraft:" + type,
+                mName =  "minecraft:" + name;
+        return obj.has(action) && obj.getAsJsonObject(action).has(mName);
+
     }
     
     public String getName(){

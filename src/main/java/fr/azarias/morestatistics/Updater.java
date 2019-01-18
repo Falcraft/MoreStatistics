@@ -24,14 +24,20 @@
 
 package fr.azarias.morestatistics;
 
+import java.util.Iterator;
 import java.util.function.BiConsumer;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Statistic;
+import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.KnowledgeBookMeta;
 
 public class Updater {
 
@@ -83,16 +89,53 @@ public class Updater {
     }
 
     /**
+     * Adds all the advancements the player already has on the server
+     */
+    private static JsonObject addAdvancements(JsonObject origin, Player p){
+        Iterator<Advancement> advs = Bukkit.advancementIterator();
+        int total = 0;
+        while(advs.hasNext()){
+            Advancement adv = advs.next();
+            if(p.getAdvancementProgress(adv).isDone()){
+                total++;
+            }
+        }
+        Statistics.ADVANCEMENT_COMPLETE.addToJson(origin, total);
+        return origin;
+    }
+
+    /**
+     * Adds all the recipe the player already discovered
+     * 
+     * @param origin
+     * @param p
+     * @return
+     */
+    private static JsonObject addRecipes(JsonObject origin, Player p){
+        //TODO
+        return origin;
+    }
+
+    /**
      * Updates the version of the given object to the given version
      */
-    public static JsonObject toVersion(STAT_VERSION version, JsonObject origin, Player p)
-    {
+    public static JsonObject toVersion(STAT_VERSION version, JsonObject origin, Player p) {
         switch(version){
             case VERSION_ONE:
-            return toVersionOne(origin, p);
+            return addExistingStats(toVersionOne(origin, p), p);//might be a cleaner, more functionnal way to do this
             default:
             return origin;// can't translate it
         }
+    }
+
+    /**
+     * Adds stats that kindda already exist on the server, but not has stat
+     */
+    public static JsonObject addExistingStats(JsonObject origin, Player p){
+        JsonObject stats = origin.getAsJsonObject("stats");
+        if(!Statistics.ADVANCEMENT_COMPLETE.isInJon(stats)) addAdvancements(stats, p);
+        if(!Statistics.DISCOVER_RECEIPE.isInJon(stats)) addRecipes(stats, p);
+        return stats;
     }
 
 }
