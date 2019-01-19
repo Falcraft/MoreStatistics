@@ -19,4 +19,4 @@ This plugin creates a file for each player in the `moreStatistics` folder, and a
 - `custom:discover_recipe` : number of recipes discovered
 - `custom:open_treasure` : number of treasure chests opened
 - `custom:level_won` : number of level won
-- `custom:mending_repairt` : amount of durability repaired on mending items
+- `custom:mending_repair` : amount of durability repaired on mending items
