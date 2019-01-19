@@ -15,3 +15,8 @@ This plugin creates a file for each player in the `moreStatistics` folder, and a
 - `custom:words_said` : number of words said
 - `custom:stripped_wood` : when stripping woods or logs with an axe
 - `custom:launch_trident` : when using the riptide enchantment of the trident to be launched
+- 'custom:advancement_complete' : number of advancements completed
+- 'custom:discover_recipe' : number of recipes discovered
+- 'custom:open_treasure' : number of treasure chests opened
+- 'custom:level_won' : number of level won
+- 'custom:mending_repairt' : amount of durability repaired on mending items
