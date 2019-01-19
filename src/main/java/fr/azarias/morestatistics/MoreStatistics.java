@@ -64,7 +64,7 @@ public class MoreStatistics {
      * Increments by one the given stat
      * of the given player
      */
-    public void addStat(AnimalTamer p, Statistics stat) {
+    public void addStat(Player p, Statistics stat) {
         addStat(p, stat, 1);
     }
 
@@ -75,9 +75,9 @@ public class MoreStatistics {
      * @param stat the stat that's going to be incremented
      * @param value the value to increment
      */
-    public void addStat(AnimalTamer p, Statistics stat, int value) {
+    public void addStat(Player p, Statistics stat, int value) {
         if (!playersStats.containsKey(p.getUniqueId())) {
-            playersStats.put(p.getUniqueId(), new PlayerStat());
+            playersStats.put(p.getUniqueId(), new PlayerStat(p));
         }
         PlayerStat stats = playersStats.get(p.getUniqueId());
         stats.addStat(stat, value);
@@ -181,7 +181,7 @@ public class MoreStatistics {
                     throw new JsonParseException("Invalid statistics file found");
                 }
             } else {
-                playersStats.put(player.getUniqueId(), new PlayerStat());
+                playersStats.put(player.getUniqueId(), new PlayerStat(player));
             }
         } catch (IOException | JsonParseException ex) {
             plugin.getLogger().log(Level.SEVERE, "Failed to load stat file of " + player.getUniqueId(), ex);

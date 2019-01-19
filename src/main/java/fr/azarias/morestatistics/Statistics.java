@@ -42,7 +42,7 @@ public enum Statistics {
     STRIPPED_WOOD("custom", "stripped_wood"),
     SHEAR_SHEEP("custom", "shear_sheep"),
     OPEN_TREASURE("custom","open_treasure"),
-    DISCOVER_RECEIPE("custom", "discover_recipe"),
+    DISCOVER_RECIPE("custom", "discover_recipe"),
     LEVEL_WON("custom", "level_won"),
     MENDING_REPAIR("custom", "mending_repair"),
     ADVANCEMENT_COMPLETE("custom","advancement_complete");

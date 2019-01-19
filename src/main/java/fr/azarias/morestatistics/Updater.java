@@ -31,13 +31,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.Statistic;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.KnowledgeBookMeta;
 
 public class Updater {
 
@@ -93,28 +90,27 @@ public class Updater {
      */
     private static JsonObject addAdvancements(JsonObject origin, Player p){
         Iterator<Advancement> advs = Bukkit.advancementIterator();
-        int total = 0;
+        int totalRecipes = 0;
+        int totalAdvancements = 0;
         while(advs.hasNext()){
             Advancement adv = advs.next();
             if(p.getAdvancementProgress(adv).isDone()){
-                total++;
+                String s = adv.getKey().getKey();
+                if(s.startsWith("recipes/")){
+                    totalRecipes++;
+                } else {
+                    totalAdvancements++;
+                }
             }
         }
-        Statistics.ADVANCEMENT_COMPLETE.addToJson(origin, total);
+        if(!Statistics.ADVANCEMENT_COMPLETE.isInJon(origin)) 
+            Statistics.ADVANCEMENT_COMPLETE.addToJson(origin, totalAdvancements);
+
+        if(!Statistics.DISCOVER_RECIPE.isInJon(origin)) 
+            Statistics.DISCOVER_RECIPE.addToJson(origin, totalRecipes);
         return origin;
     }
 
-    /**
-     * Adds all the recipe the player already discovered
-     * 
-     * @param origin
-     * @param p
-     * @return
-     */
-    private static JsonObject addRecipes(JsonObject origin, Player p){
-        //TODO
-        return origin;
-    }
 
     /**
      * Updates the version of the given object to the given version
@@ -122,10 +118,12 @@ public class Updater {
     public static JsonObject toVersion(STAT_VERSION version, JsonObject origin, Player p) {
         switch(version){
             case VERSION_ONE:
-            return addExistingStats(toVersionOne(origin, p), p);//might be a cleaner, more functionnal way to do this
+            origin = toVersionOne(origin, p);
+            //pass through
             default:
-            return origin;// can't translate it
+            origin = addExistingStats(origin, p);
         }
+        return origin;
     }
 
     /**
@@ -133,9 +131,12 @@ public class Updater {
      */
     public static JsonObject addExistingStats(JsonObject origin, Player p){
         JsonObject stats = origin.getAsJsonObject("stats");
-        if(!Statistics.ADVANCEMENT_COMPLETE.isInJon(stats)) addAdvancements(stats, p);
-        if(!Statistics.DISCOVER_RECEIPE.isInJon(stats)) addRecipes(stats, p);
-        return stats;
+        if(!Statistics.ADVANCEMENT_COMPLETE.isInJon(stats) || !Statistics.DISCOVER_RECIPE.isInJon(stats)) 
+            addAdvancements(stats, p);
+
+        if(!Statistics.LEVEL_WON.isInJon(stats))
+            Statistics.LEVEL_WON.addToJson(stats, p.getLevel());
+        return origin;
     }
 
 }

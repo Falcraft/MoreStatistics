@@ -44,11 +44,12 @@ public class PlayerStat {
      * Empty statistics
      * when this is a new player who connected
      */
-    public PlayerStat() {
+    public PlayerStat(Player p) {
         documentRoot = new JsonObject();
         stats = new JsonObject();
         documentRoot.addProperty("DataVersion", "1");
         documentRoot.add("stats", stats);
+        Updater.addExistingStats(documentRoot, p);
     }
 
     /**

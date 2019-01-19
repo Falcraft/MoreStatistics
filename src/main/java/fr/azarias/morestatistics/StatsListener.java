@@ -31,6 +31,7 @@ import java.util.UUID;
 import com.google.common.collect.ImmutableSet;
 
 import org.bukkit.Material;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.EventHandler;
@@ -38,7 +39,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerAchievementAwardedEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -46,7 +46,6 @@ import org.bukkit.event.player.PlayerItemMendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRecipeDiscoverEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import net.ess3.api.events.AfkStatusChangeEvent;
@@ -106,33 +105,31 @@ public class StatsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityTame(EntityTameEvent ev) {
-        registry.addStat(ev.getOwner(), Statistics.TAME_ENTITY);
+        if(ev.getOwner() instanceof Player){
+            registry.addStat((Player)ev.getOwner(), Statistics.TAME_ENTITY);
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerLevelChange(PlayerLevelChangeEvent ev){
         if(ev.getOldLevel() < ev.getNewLevel()){
-            plugin.getLogger().info("Won a level");
             registry.addStat(ev.getPlayer(), Statistics.LEVEL_WON, ev.getNewLevel() - ev.getOldLevel());
         }
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onPlayerDiscoverRecipe(PlayerRecipeDiscoverEvent ev){
-        plugin.getLogger().info("Discovered a recipe");
-        registry.addStat(ev.getPlayer(), Statistics.DISCOVER_RECEIPE);
-    }
-
-    @EventHandler(ignoreCancelled = true)
     public void onPlayerItemMend(PlayerItemMendEvent ev){
-        plugin.getLogger().info("Mending repaired");
         registry.addStat(ev.getPlayer(), Statistics.MENDING_REPAIR, ev.getRepairAmount());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerAchievement(PlayerAdvancementDoneEvent ev){
-        plugin.getLogger().info("Got a new advancement");
-        registry.addStat(ev.getPlayer(), Statistics.ADVANCEMENT_COMPLETE);
+        String adv = ev.getAdvancement().getKey().getKey();
+        if(adv.startsWith("recipes/")){
+            registry.addStat(ev.getPlayer(), Statistics.DISCOVER_RECIPE);
+        } else {
+            registry.addStat(ev.getPlayer(), Statistics.ADVANCEMENT_COMPLETE);
+        }
     }
 
 
@@ -145,9 +142,12 @@ public class StatsListener implements Listener {
         }
 
         if (ev.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            if(ev.getClickedBlock().getType() == Material.CHEST && ev.getClickedBlock().hasMetadata("LootTable")) {
-                plugin.getLogger().info("Opened a treasure chest");
-                registry.addStat(ev.getPlayer(), Statistics.OPEN_TREASURE);
+            if(ev.getClickedBlock().getType() == Material.CHEST && 
+                ev.getClickedBlock().getState() instanceof Chest){
+                    Chest c = (Chest) ev.getClickedBlock().getState();
+                    if(c.getLootTable() != null){
+                        registry.addStat(ev.getPlayer(), Statistics.OPEN_TREASURE);
+                    }
             }
 
             if (isShovel(ev.getMaterial())
