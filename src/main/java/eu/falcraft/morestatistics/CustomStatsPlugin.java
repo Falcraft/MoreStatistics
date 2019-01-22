@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package fr.azarias.morestatistics;
+package eu.falcraft.morestatistics;
 
 
 import org.bukkit.plugin.java.JavaPlugin;

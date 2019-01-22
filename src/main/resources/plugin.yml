@@ -1,4 +1,4 @@
 name: moreStatistics
-main: fr.azarias.morestatistics.CustomStatsPlugin
+main: eu.falcraft.morestatistics.CustomStatsPlugin
 version: 2.0
 api-version: 1.13

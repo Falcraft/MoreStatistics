@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package fr.azarias.morestatistics;
+package eu.falcraft.morestatistics;
 
 import com.google.gson.JsonObject;
 

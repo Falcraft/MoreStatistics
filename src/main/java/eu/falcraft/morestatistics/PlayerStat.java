@@ -21,14 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package fr.azarias.morestatistics;
+package eu.falcraft.morestatistics;
 
 
 import com.google.gson.JsonObject;
 
 import org.bukkit.entity.Player;
 
-import fr.azarias.morestatistics.Updater.STAT_VERSION;
+import eu.falcraft.morestatistics.Updater.STAT_VERSION;
 
 /**
  * The object representing the statistics of a player

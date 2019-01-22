@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package fr.azarias.morestatistics;
+package eu.falcraft.morestatistics;
 
 import java.io.IOException;
 import java.nio.file.Files;
