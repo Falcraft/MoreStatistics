@@ -32,15 +32,20 @@ import com.google.common.collect.ImmutableSet;
 
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
+import org.bukkit.entity.ThrownExpBottle;
+import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityTameEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemMendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -48,6 +53,8 @@ import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
+import org.bukkit.projectiles.ProjectileSource;
+
 import net.ess3.api.events.AfkStatusChangeEvent;
 
 /**
@@ -132,6 +139,31 @@ public class StatsListener implements Listener {
         }
     }
 
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent ev){
+        Entity clicked = ev.getRightClicked();
+        if(clicked instanceof StorageMinecart){
+            StorageMinecart minecart = (StorageMinecart)clicked;
+            if(minecart.getLootTable() != null){
+                registry.addStat(ev.getPlayer(), Statistics.OPEN_TREASURE);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onProjectileLaunch(ProjectileLaunchEvent ev){
+        Entity ent = ev.getEntity();
+        if(ent instanceof ThrownExpBottle){
+            ThrownExpBottle bottle = (ThrownExpBottle)ent;
+            ProjectileSource source = bottle.getShooter();
+            if(source != null && 
+                source instanceof Player){
+                Player shooter = (Player)source;
+                registry.addStat(shooter, Statistics.EXP_BOTTLE_LAUNCHED);
+            }
+        }
+    }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent ev) {
