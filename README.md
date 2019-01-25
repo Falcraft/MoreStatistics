@@ -20,3 +20,4 @@ This plugin creates a file for each player in the `moreStatistics` folder, and a
 - `custom:open_treasure` : number of treasure chests opened
 - `custom:level_won` : number of level won
 - `custom:mending_repair` : amount of durability repaired on mending items
+- `custom:exp_bottle_launched` : number of xp bottle launched, these can be obtained in survival, in the shipwrecks chests
