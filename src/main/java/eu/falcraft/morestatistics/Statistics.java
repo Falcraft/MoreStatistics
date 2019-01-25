@@ -46,7 +46,8 @@ public enum Statistics {
     LEVEL_WON("custom", "level_won"),
     MENDING_REPAIR("custom", "mending_repair"),
     ADVANCEMENT_COMPLETE("custom","advancement_complete"),
-    EXP_BOTTLE_LAUNCHED("custom","exp_bottle_launched");
+    EXP_BOTTLE_LAUNCHED("custom","exp_bottle_launched"),
+    BEACON_AFFECTED("custom", "beacon_affected");
 
     Statistics(String type, String name){
         this.type = type;

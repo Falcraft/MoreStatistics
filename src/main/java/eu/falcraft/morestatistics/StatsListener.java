@@ -39,9 +39,11 @@ import org.bukkit.entity.ThrownExpBottle;
 import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent.Action;
+import org.bukkit.event.entity.EntityPotionEffectEvent.Cause;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
@@ -102,6 +104,16 @@ public class StatsListener implements Listener {
 
     public MoreStatistics getRegistry() {
         return registry;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityPotionEffect(EntityPotionEffectEvent ev){
+        if(ev.getCause() == Cause.BEACON && ev.getEntity() instanceof Player){
+            if(ev.getAction() == Action.ADDED || ev.getAction() == Action.CHANGED){
+                Player p = (Player)ev.getEntity();
+                registry.addStat(p, Statistics.BEACON_AFFECTED);
+            }
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -167,13 +179,13 @@ public class StatsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent ev) {
-        if (ev.getAction() == Action.RIGHT_CLICK_AIR
+        if (ev.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_AIR
                 && ev.getMaterial() == Material.FIREWORK_ROCKET
                 && ev.getPlayer().isGliding()) {
             registry.addStat(ev.getPlayer(), Statistics.ELYTRA_PROPELS);
         }
 
-        if (ev.getAction() == Action.RIGHT_CLICK_BLOCK) {
+        if (ev.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
             if(ev.getClickedBlock().getType() == Material.CHEST && 
                 ev.getClickedBlock().getState() instanceof Chest){
                     Chest c = (Chest) ev.getClickedBlock().getState();
